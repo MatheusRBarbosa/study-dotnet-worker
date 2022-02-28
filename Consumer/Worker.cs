@@ -23,7 +23,7 @@ public class Worker : BackgroundService
                 Console.WriteLine($"[X] Message received: {message}");
             }
 
-            await Task.Delay(10000, stoppingToken);
+            await Task.Delay(20000, stoppingToken);
         }
 
     }

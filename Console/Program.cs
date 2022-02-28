@@ -17,6 +17,11 @@ internal class Program
                 await Publish();
             }
         }
+        else if (args[0].ToUpper().Equals("GET"))
+        {
+            var id = args[1];
+            await Get(id);
+        }
     }
 
     static async Task Publish()
@@ -39,5 +44,14 @@ internal class Program
         var stringMessage = JsonSerializer.Serialize(message);
         rabbitService.Send(stringMessage);
         Console.WriteLine("[X] Message sent!");
+    }
+
+    static async Task Get(string id)
+    {
+        var redisService = new RedisService();
+        var guid = Guid.Parse(id);
+
+        var position = await redisService.GetPosition(guid);
+        Console.WriteLine($"[-] Sua posicao eh: {position.ToString()}");
     }
 }
