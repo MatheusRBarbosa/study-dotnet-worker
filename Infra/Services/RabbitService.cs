@@ -1,9 +1,10 @@
 using System.Text;
 using System.Text.Json;
+using RabbitMQ.Client;
+using RabbitMQ.Client.Events;
 
 using QueueSimulator.Domain.Interfaces.Infra.Services;
 using QueueSimulator.Domain.Models;
-using RabbitMQ.Client;
 
 namespace QueueSimulator.Infra.Services
 {
@@ -29,18 +30,18 @@ namespace QueueSimulator.Infra.Services
             return 1;
         }
 
-        public Message Receive()
+        public void ListenEvents()
         {
-            Message message = null!;
-            using (var connection = factory.CreateConnection())
+            QueueDeclare();
+            var consumer = new EventingBasicConsumer(currentChannel);
+            consumer.Received += (model, ea) =>
             {
-                using (var channel = connection.CreateModel())
-                {
+                var body = ea.Body.ToArray();
+                var stringMessage = Encoding.UTF8.GetString(body);
+                Console.WriteLine(" [x] Received {0}", stringMessage);
+            };
 
-                }
-            }
-
-            return message;
+            Consume(consumer);
         }
 
         private void QueueDeclare(string queue = "queue-default")
@@ -61,6 +62,13 @@ namespace QueueSimulator.Infra.Services
                             routingKey: routeKey,
                             basicProperties: null,
                             body: message);
+        }
+
+        private void Consume(EventingBasicConsumer consumer, string queue = "queue-default")
+        {
+            currentChannel.BasicConsume(queue: queue,
+                                 autoAck: true,
+                                 consumer: consumer);
         }
     }
 }
