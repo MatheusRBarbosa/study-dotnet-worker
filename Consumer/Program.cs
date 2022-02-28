@@ -6,6 +6,7 @@ IHost host = Host.CreateDefaultBuilder(args)
     .ConfigureServices(services =>
     {
         services.AddSingleton<IRabbitService, RabbitService>();
+        services.AddSingleton<IRedisService, RedisService>();
         services.AddHostedService<Worker>();
     })
     .Build();

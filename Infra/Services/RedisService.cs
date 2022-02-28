@@ -1,5 +1,6 @@
 using StackExchange.Redis;
 using QueueSimulator.Domain.Interfaces.Infra.Services;
+using System.Collections;
 
 namespace QueueSimulator.Infra.Services;
 
@@ -9,13 +10,15 @@ public class RedisService : IRedisService
     private IDatabase db;
 
     private string primaryKey = "counter";
+    private string host = "localhost";
+    private int port = 6379;
 
     public RedisService()
     {
         redis = ConnectionMultiplexer.Connect(
             new ConfigurationOptions
             {
-                EndPoints = { "localhost:6379" }
+                EndPoints = { $"{host}:{port}" }
             });
 
         db = redis.GetDatabase();
@@ -36,9 +39,13 @@ public class RedisService : IRedisService
         await db.StringSetAsync(id.ToString(), position);
     }
 
-    public async Task DecreasePosition(Guid id)
+    public async Task DecreaseAll()
     {
-        await db.StringDecrementAsync(id.ToString());
+        var keys = Keys();
+        foreach (var key in keys)
+        {
+            await DecreasePosition(key.ToString()!);
+        }
     }
 
     public async Task DecreaseCounter()
@@ -49,5 +56,15 @@ public class RedisService : IRedisService
     public async Task IncreaseCounter()
     {
         await db.StringIncrementAsync(primaryKey);
+    }
+
+    private IEnumerable Keys()
+    {
+        return redis.GetServer(host, port).Keys();
+    }
+
+    private async Task DecreasePosition(string id)
+    {
+        await db.StringDecrementAsync(id);
     }
 }

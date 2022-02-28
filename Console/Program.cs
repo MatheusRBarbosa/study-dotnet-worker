@@ -51,7 +51,7 @@ internal class Program
         var redisService = new RedisService();
         var guid = Guid.Parse(id);
 
-        var position = await redisService.GetPosition(guid);
+        var position = (await redisService.GetPosition(guid)) + 1;
         Console.WriteLine($"[-] Sua posicao eh: {position.ToString()}");
     }
 }
