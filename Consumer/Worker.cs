@@ -16,9 +16,14 @@ public class Worker : BackgroundService
     {
         while (!stoppingToken.IsCancellationRequested)
         {
-            // _logger.LogInformation("Worker running at: {time}", DateTimeOffset.Now);
-            rabbitService.ListenEvents();
-            await Task.Delay(1000, stoppingToken);
+            var message = rabbitService.GetMessage();
+
+            if (message != null && message != "")
+            {
+                Console.WriteLine($"[X] Message received: {message}");
+            }
+
+            await Task.Delay(10000, stoppingToken);
         }
 
     }

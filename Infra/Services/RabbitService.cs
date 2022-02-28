@@ -1,10 +1,8 @@
 using System.Text;
-using System.Text.Json;
 using RabbitMQ.Client;
 using RabbitMQ.Client.Events;
 
 using QueueSimulator.Domain.Interfaces.Infra.Services;
-using QueueSimulator.Domain.Models;
 
 namespace QueueSimulator.Infra.Services
 {
@@ -12,6 +10,7 @@ namespace QueueSimulator.Infra.Services
     {
         private readonly ConnectionFactory factory;
         private IModel currentChannel = null!;
+        private EventingBasicConsumer currentConsumer = null!;
 
         public RabbitService()
         {
@@ -21,27 +20,43 @@ namespace QueueSimulator.Infra.Services
             };
         }
 
-        public int Send(Message message)
+        public void Send(string message)
         {
             QueueDeclare();
-            var stringMessage = JsonSerializer.Serialize(message);
-            var bytesMessage = Encoding.UTF8.GetBytes(stringMessage);
+            Console.WriteLine($"[X] Message content: {message}");
+            var bytesMessage = Encoding.UTF8.GetBytes(message);
             Publish(bytesMessage);
-            return 1;
         }
 
         public void ListenEvents()
         {
             QueueDeclare();
-            var consumer = new EventingBasicConsumer(currentChannel);
-            consumer.Received += (model, ea) =>
+            currentConsumer = new EventingBasicConsumer(currentChannel);
+
+            currentConsumer.Received += (model, ea) =>
             {
                 var body = ea.Body.ToArray();
                 var stringMessage = Encoding.UTF8.GetString(body);
-                Console.WriteLine(" [x] Received {0}", stringMessage);
+                Console.WriteLine("[x] Received {0}", stringMessage);
+                currentChannel.BasicAck(ea.DeliveryTag, false);
             };
 
-            Consume(consumer);
+            Consume();
+        }
+
+        public string? GetMessage(string queue = "queue-default")
+        {
+            QueueDeclare();
+            var ea = currentChannel.BasicGet(queue, true);
+
+            if (ea == null)
+            {
+                return null;
+            }
+
+            var body = ea.Body.ToArray();
+            var message = Encoding.UTF8.GetString(body);
+            return message;
         }
 
         private void QueueDeclare(string queue = "queue-default")
@@ -54,6 +69,8 @@ namespace QueueSimulator.Infra.Services
                                  exclusive: false,
                                  autoDelete: false,
                                  arguments: null);
+
+            currentChannel.BasicQos(0, 1, false);
         }
 
         private void Publish(byte[] message, string routeKey = "queue-default")
@@ -64,11 +81,11 @@ namespace QueueSimulator.Infra.Services
                             body: message);
         }
 
-        private void Consume(EventingBasicConsumer consumer, string queue = "queue-default")
+        private void Consume(string queue = "queue-default")
         {
             currentChannel.BasicConsume(queue: queue,
-                                 autoAck: true,
-                                 consumer: consumer);
+                                 autoAck: false,
+                                 consumer: currentConsumer);
         }
     }
 }
