@@ -31,12 +31,13 @@ internal class Program
 
         var position = await redisService.GetTotal();
         var guid = System.Guid.NewGuid();
+
         await redisService.IncreaseCounter();
         await redisService.SetPosition(guid, position);
 
         var message = new Message
         {
-            Name = "Matheus barbosa",
+            Name = RandomName(),
             Position = position,
             Id = guid
         };
@@ -53,5 +54,48 @@ internal class Program
 
         var position = (await redisService.GetPosition(guid)) + 1;
         Console.WriteLine($"[-] Sua posicao eh: {position.ToString()}");
+    }
+
+    static string RandomName()
+    {
+        var names = new List<string>
+        {
+            "Matheus",
+            "Lucas",
+            "Pedro",
+            "Joao",
+            "Paulo",
+            "Marcos",
+            "Joaquim",
+            "Jorge",
+            "Ana",
+            "Maria",
+            "Lucia",
+            "Alice",
+            "Fernanda",
+            "Beatriz",
+            "Paula",
+            "Paulo"
+        };
+
+        var lastNames = new List<string>
+        {
+            "Barbosa",
+            "Silva",
+            "Santos",
+            "Souza",
+            "Oliveira",
+            "Pereira",
+            "Rodrigues",
+            "Almeida",
+            "Costa",
+            "Lima"
+        };
+
+        var random = new Random();
+        var name = random.Next(names.Count);
+        var lastName = random.Next(lastNames.Count);
+
+        return $"{names[name]} {lastNames[lastName]}";
     }
 }
