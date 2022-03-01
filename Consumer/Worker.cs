@@ -1,5 +1,8 @@
-namespace QueueSimulator.Consumer;
+using System.Text.Json;
+
+using QueueSimulator.Domain.Models;
 using QueueSimulator.Domain.Interfaces.Infra.Services;
+namespace QueueSimulator.Consumer;
 
 public class Worker : BackgroundService
 {
@@ -27,6 +30,9 @@ public class Worker : BackgroundService
             if (message != null && message != "")
             {
                 Console.WriteLine($"[X] Message received: {message}");
+                var json = JsonSerializer.Deserialize<Message>(message)!;
+
+                await redisService.DeleteKey(json.Id);
                 await redisService.DecreaseAll();
             }
 

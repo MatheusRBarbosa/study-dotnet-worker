@@ -58,6 +58,11 @@ public class RedisService : IRedisService
         await db.StringIncrementAsync(primaryKey);
     }
 
+    public async Task DeleteKey(Guid id)
+    {
+        await db.KeyDeleteAsync(id.ToString());
+    }
+
     private IEnumerable Keys()
     {
         return redis.GetServer(host, port).Keys();
